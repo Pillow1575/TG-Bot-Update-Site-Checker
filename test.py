@@ -1,6 +1,6 @@
 import telebot, requests, time, threading, os
 
-#admin = "id tg"
+admin = ""
 
 def hhh():
     while True:
