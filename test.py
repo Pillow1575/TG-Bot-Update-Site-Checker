@@ -77,7 +77,7 @@ def handle_text(message):
             f.close()
             bot.send_message(message.chat.id, "Вы отписались от рассылки")
         else:
-            bot.send_message(message.chat.id, "Вы уже отписаны от рассылки")
+            bot.send_message(message.chat.id, "Вы уже были отписаны от рассылки")
     elif (message.text.lower()=="рассылка")and(str(message.chat.id)) in admin:
         for i in idsAll:
             bot.send_message(i, 'Тест')
