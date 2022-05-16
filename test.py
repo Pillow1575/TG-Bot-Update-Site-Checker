@@ -1,6 +1,13 @@
 import telebot, requests, time, threading, os
 
-admin = ""
+admin = ["563330939"]
+file = open("ids.txt", 'r')
+idsAll = []
+for i in file.readlines():
+    idsAll.append(i.replace('\n', ''))
+file.close()
+
+print (idsAll)
 
 def hhh():
     while True:
@@ -38,15 +45,12 @@ def hhh():
                 if txt2.count(i)==0:
                     newRefs.append(i)
             newRef = newRefs[0]
-            idsFile = open("ids.txt", "r")
-            ids = idsFile.readlines()
-            idsFile.close()
-            for i in ids:
-                bot.send_message(i.replace("\n", ''), newRef)
+            for i in idsAll:
+                bot.send_message(i, newRef)
 
         time.sleep(120)
 
-bot = telebot.TeleBot('token')
+bot = telebot.TeleBot('5319148067:AAG9FJP6kWK8W12qHUKGpeFCRYYiKXPPvRA')
 # Функция, обрабатывающая команду /start
 @bot.message_handler(commands=["start"])
 def start(m, res=False):
@@ -55,31 +59,28 @@ def start(m, res=False):
 @bot.message_handler(content_types=["text"])
 def handle_text(message):
     if message.text.lower()=="да":
-        f = open("ids.txt", "r+")
-        if str(message.chat.id)+"\n" not in f.readlines():
-            f.write(str(message.chat.id)+'\n')
-        f.close()
-        bot.send_message(message.chat.id, "Вы подписались или уже были подписаны на рассылку")
-    elif message.text.lower()=="нет":
-        f = open("ids.txt", "r+")
-        if str(message.chat.id)+"\n" in f.readlines():
-            f.close()
+        
+        if str(message.chat.id) not in idsAll:
+            idsAll.append(str(message.chat.id))
             f = open("ids.txt", "r+")
-            text = f.read()
+            f.write(str(message.chat.id)+'\n')
             f.close()
-            os.remove("ids.txt")
+            bot.send_message(message.chat.id, "Вы подписались на рассылку")
+        else:
+            bot.send_message(message.chat.id, "Вы уже были подписаны на рассылку")
+    elif message.text.lower()=="нет":
+        if str(message.chat.id) in idsAll:
+            idsAll.remove(str(message.chat.id))
             f = open("ids.txt", 'w')
-            print(text)
-            f.write(text.replace(str(message.chat.id)+"\n", ''))
-        f.close()
-        bot.send_message(message.chat.id, "Вы отписались или уже были отписаны от рассылки")
-    elif (message.text.lower()=="рассылка")and(str(message.chat.id))==admin:
-        file = open('ids.txt', 'r+')
-        text = file.readlines()
-        file.close()
-        for i in text:
-            print(i.replace('\n', ''))
-            bot.send_message(i.replace('\n', ''), 'Тест')
+            for i in idsAll:
+                f.write(i+'\n')
+            f.close()
+            bot.send_message(message.chat.id, "Вы отписались от рассылки")
+        else:
+            bot.send_message(message.chat.id, "Вы уже отписаны от рассылки")
+    elif (message.text.lower()=="рассылка")and(str(message.chat.id)) in admin:
+        for i in idsAll:
+            bot.send_message(i, 'Тест')
     else:
         bot.send_message(message.chat.id, 'Чтобы получать расписание МГКИТ напишите "Да", чтобы больше не получать "Нет"')
 
