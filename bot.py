@@ -1,6 +1,7 @@
 import telebot, requests, time, threading, os
 
-admin = ["563330939"]
+admin = ["admin's id"]
+token = "your token"
 file = open("ids.txt", 'r')
 idsAll = []
 for i in file.readlines():
@@ -50,7 +51,7 @@ def hhh():
 
         time.sleep(120)
 
-bot = telebot.TeleBot('5319148067:AAG9FJP6kWK8W12qHUKGpeFCRYYiKXPPvRA')
+bot = telebot.TeleBot(token)
 # Функция, обрабатывающая команду /start
 @bot.message_handler(commands=["start"])
 def start(m, res=False):
