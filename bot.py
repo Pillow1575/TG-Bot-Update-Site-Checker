@@ -15,7 +15,7 @@ def hhh():
         hour = time.localtime(time.time()).tm_hour 
         if hour >= 10 and hour < 22:
             req = requests.get("https://github.com").text # Тут должна быть ссылка на сайт, который надо обновлять
-            req = req[req.find("От"):req.find("До")] # Ограничения поиска по коду сайта
+            req = req[req.find("от"):req.find("до")] # Ограничения поиска по HTML сайта
             req = req.split('"')
             refs = []
             for i in req:
@@ -50,6 +50,10 @@ def hhh():
                         bot.send_message(i, newRef)
                     except:
                         bot.send_message(admin[0], f'Не удалось отправить пользователю {i}')
+                        idsAll.remove(i)
+                        with open('ids.txt', 'w') as f:
+                            for n in idsAll:
+                                f.write(n)
 
         time.sleep(120) # Период обновления
 
@@ -57,7 +61,7 @@ bot = telebot.TeleBot(token)
 
 @bot.message_handler(commands=["start"])
 def handle_command(command, res=False):
-    bot.send_message(command.chat.id, 'Дефолтное сообщение /yes - подписаться, /no - отписаться') # Тут должно быть дефолтное сообщение
+    bot.send_message(command.chat.id, 'Чтобы получать рассылку напишите "/yes", чтобы больше не получать "/no"') # Тут должно быть дефолтное сообщение
 
 @bot.message_handler(commands=["yes"])
 def handle_command(message, res=False):
@@ -91,12 +95,12 @@ def handle_text(message):
             bot.send_message(i, 'Тест')
     elif (message.text.lower()=="users") and (str(message.chat.id) in admin):
         users = "Пользователей: %d \n" % len(idsAll)
-        for i in idsAll:
-            users += i + '\n'
+    #    for i in idsAll:
+    #       users += i + '\n'
         bot.send_message(message.chat.id, users)
-        print(idsAll)
+        print(users)
     else:
-        bot.send_message(message.chat.id, 'Дефолтное сообщение /yes - подписаться, /no - отписаться') # Тут должно быть дефолтное сообщение
+        bot.send_message(message.chat.id, 'Чтобы получать рассылку напишите "/yes", чтобы больше не получать "/no"') # Тут должно быть дефолтное сообщение
 
 t1 = threading.Thread(target=hhh, args=())
 t1.start()
