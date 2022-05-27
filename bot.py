@@ -1,7 +1,7 @@
 import telebot, requests, time, threading, os
 
-admin = ["admin's id"]
-token = "your token"
+admin = ["id"] # Тут должен быть id администратора
+token = "token" # Тут должен быть токен бота
 file = open("ids.txt", 'r')
 idsAll = []
 for i in file.readlines():
@@ -12,80 +12,93 @@ print (idsAll)
 
 def hhh():
     while True:
-        req = requests.get("https://www.mgkit.ru/studentu/raspisanie-zanatij").text
-        req = req[req.find("Изменения в расписании"):req.find("Подписывайтесь")]
-        req = req.split('"')
-        refs = []
-        for i in req:
-            if i[:4]=="http":
-                if refs.count(i)==0:
-                    refs.append(i)
+        hour = time.localtime(time.time()).tm_hour 
+        if hour >= 10 and hour < 22:
+            req = requests.get("https://github.com").text # Тут должна быть ссылка на сайт, который надо обновлять
+            req = req[req.find("От"):req.find("До")] # Ограничения поиска по коду сайта
+            req = req.split('"')
+            refs = []
+            for i in req:
+                if i[:4]=="http":
+                    if refs.count(i)==0:
+                        refs.append(i)
 
-        inFile = ""
+            inFile = ""
 
-        for i in refs:
-            inFile += i + '\n'
+            for i in refs:
+                inFile += i + '\n'
 
-        os.remove("2.txt")
-        os.rename("1.txt", "2.txt")
+            os.remove("2.txt")
+            os.rename("1.txt", "2.txt")
 
-        text1 = open("1.txt", "w+")
-        text1.write(inFile)
-        text1.close()
+            with open("1.txt", "w+") as text1:
+                text1.write(inFile)
 
-        fileText = open("1.txt", "r")
-        txt1 = fileText.readlines()
-        fileText.close()
-        fileText = open("2.txt", "r")
-        txt2 = fileText.readlines()
-        fileText.close()
+            with open("1.txt", "r") as fileText:
+                txt1 = fileText.readlines()
+            with open("2.txt", "r") as fileText:
+                txt2 = fileText.readlines()
 
-        if txt1 != txt2:
-            newRefs = []
-            for i in txt1:
-                if txt2.count(i)==0:
-                    newRefs.append(i)
-            newRef = newRefs[0]
-            for i in idsAll:
-                bot.send_message(i, newRef)
+            if txt1 != txt2:
+                newRefs = []
+                for i in txt1:
+                    if txt2.count(i)==0:
+                        newRefs.append(i)
+                newRef = newRefs[0]
+                for i in idsAll:
+                    try:
+                        bot.send_message(i, newRef)
+                    except:
+                        bot.send_message(admin[0], f'Не удалось отправить пользователю {i}')
 
-        time.sleep(120)
+        time.sleep(120) # Период обновления
 
 bot = telebot.TeleBot(token)
-# Функция, обрабатывающая команду /start
+
 @bot.message_handler(commands=["start"])
-def start(m, res=False):
-    bot.send_message(m.chat.id, 'Чтобы получать расписание МГКИТ напишите "Да", чтобы больше не получать "Нет"')
-# Получение сообщений от юзера
-@bot.message_handler(content_types=["text"])
-def handle_text(message):
-    if message.text.lower()=="да":
-        
-        if str(message.chat.id) not in idsAll:
-            idsAll.append(str(message.chat.id))
-            f = open("ids.txt", "r+")
+def handle_command(command, res=False):
+    bot.send_message(command.chat.id, 'Дефолтное сообщение /yes - подписаться, /no - отписаться') # Тут должно быть дефолтное сообщение
+
+@bot.message_handler(commands=["yes"])
+def handle_command(message, res=False):
+    if str(message.chat.id) not in idsAll:
+        idsAll.append(str(message.chat.id))
+        with open("ids.txt", "a") as f:
             f.write(str(message.chat.id)+'\n')
-            f.close()
-            bot.send_message(message.chat.id, "Вы подписались на рассылку")
-        else:
-            bot.send_message(message.chat.id, "Вы уже были подписаны на рассылку")
-    elif message.text.lower()=="нет":
-        if str(message.chat.id) in idsAll:
-            idsAll.remove(str(message.chat.id))
-            f = open("ids.txt", 'w')
+        bot.send_message(message.chat.id, "Вы подписались на рассылку")
+        bot.send_message(admin[0], f"Новый пользователь: {message.chat.username}[{message.chat.id}]")
+    else:
+        bot.send_message(message.chat.id, "Вы уже были подписаны на рассылку")
+
+@bot.message_handler(commands=["no"])
+def handle_command(message, res=False):
+    if str(message.chat.id) in idsAll:
+        idsAll.remove(str(message.chat.id))
+        with open("ids.txt", 'w') as f:
             for i in idsAll:
                 f.write(i+'\n')
-            f.close()
-            bot.send_message(message.chat.id, "Вы отписались от рассылки")
-        else:
-            bot.send_message(message.chat.id, "Вы уже были отписаны от рассылки")
-    elif (message.text.lower()=="рассылка")and(str(message.chat.id)) in admin:
+        bot.send_message(message.chat.id, "Вы отписались от рассылки")
+        bot.send_message(admin[0], f"Удалён пользователь: {message.chat.username}[{message.chat.id}]")
+    else:
+        bot.send_message(message.chat.id, "Вы уже были отписаны от рассылки")
+
+@bot.message_handler(content_types=["text"])
+def handle_text(message):
+    print(f"{message.chat.username}: {message.text}")
+    bot.send_message(admin[0], f"{message.chat.username}[{str(message.chat.id)}]: {message.text}")
+    if (message.text.lower()=="рассылка") and (str(message.chat.id) in admin):
         for i in idsAll:
             bot.send_message(i, 'Тест')
+    elif (message.text.lower()=="users") and (str(message.chat.id) in admin):
+        users = "Пользователей: %d \n" % len(idsAll)
+        for i in idsAll:
+            users += i + '\n'
+        bot.send_message(message.chat.id, users)
+        print(idsAll)
     else:
-        bot.send_message(message.chat.id, 'Чтобы получать расписание МГКИТ напишите "Да", чтобы больше не получать "Нет"')
+        bot.send_message(message.chat.id, 'Дефолтное сообщение /yes - подписаться, /no - отписаться') # Тут должно быть дефолтное сообщение
 
-# Запускаем бота
 t1 = threading.Thread(target=hhh, args=())
 t1.start()
+
 bot.polling(none_stop=True, interval=0)
